@@ -10,9 +10,32 @@ clients:
 
 scrape_configs:
 - job_name: system
+  pipeline_stages:
+  - regex: # parse the app name from the filename
+      source: filename
+      expression: '/var/log/(?P<app_name>[^/]+)/current'
+  - regex: # pull any structured json from the log
+      expression: '^.*\s*(?P<json>{.*}).*$'
+  - json:
+      source: json
+      expressions:
+        app_module: app_module
+        app_name: app_name
+        app_version: app_version
+        msg: msg
+        log_type: type
+  - labels:
+      app: app_name
+      app_module:
+      app_name:
+      app_version:
+      msg:
+      log_type:
   static_configs:
-  - targets:
-      - localhost
-    labels:
-      job: varlogs
-      __path__: /var/log/*/current
+    - targets:
+        - localhost
+      labels:
+        job: varlogs
+        __path__: /var/log/*/current
+        app: __path__
+        
